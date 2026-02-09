@@ -17,7 +17,7 @@ Serial + OpenMP + POSIX threads + MPI + Hybrid (MPI+OpenMP) + CUDA, plus final a
 
 ## Phase 0: Project Setup And Planning
 ### 0.1 Repository structure
-- [ ] Create folders: `src/`, `include/`, `data/raw/`, `data/processed/`, `scripts/`, `results/`, `plots/`, `report/`, `docs/`.
+- [x] Create folders: `src/`, `include/`, `data/raw/`, `data/processed/`, `scripts/`, `results/`, `plots/`, `report/`, `docs/`.
 - [ ] Add `README.md` with build and run instructions.
 - [ ] Add `Makefile` (or `CMakeLists.txt`) with separate targets:
   - [ ] `train_serial`
@@ -51,14 +51,14 @@ Done criteria:
 
 ## Phase 1: Data Gathering And Provenance
 ### 1.1 Choose CB513 source
-- [ ] Select one primary CB513 source and document exact URL.
-- [ ] Save source citation in `docs/data_provenance.md`.
-- [ ] Record download date, file names, and checksums.
+- [x] Select one primary CB513 source and document exact URL.
+- [x] Save source citation in `docs/data_provenance.md`.
+- [x] Record download date, file names, and checksums.
 
 ### 1.2 Download and store raw files
-- [ ] Create script: `scripts/download_cb513.sh`.
-- [ ] Download dataset into `data/raw/`.
-- [ ] Keep raw files unchanged (read-only copy for reproducibility).
+- [x] Create script: `scripts/download_cb513.sh`.
+- [x] Download dataset into `data/raw/`.
+- [x] Keep raw files unchanged (read-only copy for reproducibility).
 
 ### 1.3 Label format confirmation
 - [ ] Verify whether labels are already 3-state (`H/E/C`) or 8-state DSSP.
@@ -383,4 +383,3 @@ Done criteria:
 Optional if schedule allows:
 - [ ] Phase 8 (hybrid tuning)
 - [ ] Phase 9 (CUDA depth improvements)
-

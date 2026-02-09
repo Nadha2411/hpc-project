@@ -1,0 +1,31 @@
+CB513 Raw Dataset Manifest
+Generated UTC: 2026-02-09T13:42:51Z
+Source URL: https://www.compbio.dundee.ac.uk/jpred4/downloads/513_distribute.tar.gz
+Archive: 513_distribute.tar.gz
+Archive SHA256 (expected): 6621aa7a36a45b9cf505e00dab1d41a7fe848ba61d43d35986e502b4063683e2
+Archive SHA256 (actual): 6621aa7a36a45b9cf505e00dab1d41a7fe848ba61d43d35986e502b4063683e2
+.all file count: 513
+
+First 10 files (sorted):
+  - 154l-1-AUTO.1.all
+  - 1aazb-1-DOMAK.all
+  - 1acx.all
+  - 1add-1-AS.all
+  - 1adeb-2-AUTO.1.all
+  - 1ahb-2-GJB.all
+  - 1alkb-1-AS.all
+  - 1amg-2-AS.all
+  - 1amp-1-AS.all
+  - 1aorb-1-AS.all
+
+Last 10 files (sorted):
+  - 7cata.all
+  - 7icd.all
+  - 7rsa.all
+  - 821p-1-DOMAK.all
+  - 8adh.all
+  - 9apia.all
+  - 9apib.all
+  - 9insb.all
+  - 9pap.all
+  - 9wgaa.all
