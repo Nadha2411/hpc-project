@@ -61,7 +61,7 @@ Done criteria:
 - [x] Keep raw files unchanged (read-only copy for reproducibility).
 
 ### 1.3 Label format confirmation
-- [ ] Verify whether labels are already 3-state (`H/E/C`) or 8-state DSSP.
+- [x] Verify whether labels are already 3-state (`H/E/C`) or 8-state DSSP.
 - [ ] If 8-state, implement mapping from paper:
   - [ ] `H,G,I -> H`
   - [ ] `B,E -> E`
