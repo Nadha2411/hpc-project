@@ -62,10 +62,10 @@ Done criteria:
 
 ### 1.3 Label format confirmation
 - [x] Verify whether labels are already 3-state (`H/E/C`) or 8-state DSSP.
-- [ ] If 8-state, implement mapping from paper:
-  - [ ] `H,G,I -> H`
-  - [ ] `B,E -> E`
-  - [ ] all others -> `C`
+- [x] If 8-state, implement mapping from paper:
+  - [x] `H,G,I -> H`
+  - [x] `B,E -> E`
+  - [x] all others -> `C`
 
 Done criteria:
 - Raw dataset is available locally with documented provenance and label format.
