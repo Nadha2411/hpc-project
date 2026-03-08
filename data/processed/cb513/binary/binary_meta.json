@@ -1,0 +1,50 @@
+{
+  "class_map": {
+    "C": 2,
+    "E": 1,
+    "H": 0
+  },
+  "dtype_X": "float32",
+  "dtype_y": "int32",
+  "encoding": "onehot",
+  "feature_dim": 260,
+  "num_classes": 3,
+  "splits": {
+    "test": {
+      "X_shape": [
+        12692,
+        260
+      ],
+      "class_distribution": {
+        "C": 5364,
+        "E": 2841,
+        "H": 4487
+      },
+      "n_samples": 12692
+    },
+    "train": {
+      "X_shape": [
+        58363,
+        260
+      ],
+      "class_distribution": {
+        "C": 24883,
+        "E": 13103,
+        "H": 20377
+      },
+      "n_samples": 58363
+    },
+    "val": {
+      "X_shape": [
+        13064,
+        260
+      ],
+      "class_distribution": {
+        "C": 5716,
+        "E": 3115,
+        "H": 4233
+      },
+      "n_samples": 13064
+    }
+  }
+}

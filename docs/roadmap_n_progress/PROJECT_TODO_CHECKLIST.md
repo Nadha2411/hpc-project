@@ -19,8 +19,8 @@ Serial + OpenMP + POSIX threads + MPI + Hybrid (MPI+OpenMP) + CUDA, plus final a
 ### 0.1 Repository structure
 - [x] Create folders: `src/`, `include/`, `data/raw/`, `data/processed/`, `scripts/`, `results/`, `plots/`, `report/`, `docs/`.
 - [ ] Add `README.md` with build and run instructions.
-- [ ] Add `Makefile` (or `CMakeLists.txt`) with separate targets:
-  - [ ] `train_serial`
+- [x] Add `Makefile` with separate targets:
+  - [x] `train_serial`
   - [ ] `train_omp`
   - [ ] `train_pthreads`
   - [ ] `train_mpi`
@@ -28,9 +28,9 @@ Serial + OpenMP + POSIX threads + MPI + Hybrid (MPI+OpenMP) + CUDA, plus final a
   - [ ] `train_cuda`
 
 ### 0.2 Environment and toolchain check
-- [ ] Confirm C/C++ compiler and flags (`-O3 -march=native`).
-- [ ] Confirm OpenMP support (`-fopenmp`).
-- [ ] Confirm pthread support (`-pthread`).
+- [x] Confirm C/C++ compiler and flags (`-O3 -march=native`).
+- [x] Confirm OpenMP support (`-fopenmp`).
+- [x] Confirm pthread support (`-pthread`).
 - [ ] Confirm MPI install (`mpicc`, `mpirun`).
 - [ ] Confirm remote CUDA environment access (lab/cloud/Colab).
 
@@ -74,36 +74,35 @@ Done criteria:
 
 ## Phase 2: Preprocessing Pipeline
 ### 2.1 Parser and canonical data model
-- [ ] Implement parser for sequences and per-residue labels.
-- [ ] Validate sequence length equals label length for each protein.
-- [ ] Store canonical representation (protein ID, sequence, labels).
+- [x] Implement parser for sequences and per-residue labels.
+- [x] Validate sequence length equals label length for each protein.
+- [x] Store canonical representation (protein ID, sequence, labels).
 
 ### 2.2 Sliding window generation (paper-aligned)
-- [ ] Implement window size `13` (center residue target).
-- [ ] Implement edge handling (padding policy) and document it.
-- [ ] Confirm input dimension for one-hot: `20 x 13 = 260`.
+- [x] Implement window size `13` (center residue target).
+- [x] Implement edge handling (padding policy) and document it.
+- [x] Confirm input dimension for one-hot: `20 x 13 = 260`.
 
 ### 2.3 Feature encoding
-- [ ] MVP encoding: one-hot amino acid encoding.
-- [ ] Optional encoding: BLOSUM62 mode with same window pipeline.
-- [ ] Keep encoding selectable by CLI flag.
+- [x] MVP encoding: one-hot amino acid encoding.
+- [x] Optional encoding: BLOSUM62 mode with same window pipeline.
+- [x] Keep encoding selectable by CLI flag.
 
 ### 2.4 Dataset split protocol
-- [ ] Implement either:
-  - [ ] Seven-fold cross-validation (paper style), or
-  - [ ] Fixed train/val/test split (must document clearly).
-- [ ] Ensure split is deterministic with fixed seed.
-- [ ] Save split indices for reproducibility.
+- [x] Implement either:
+  - [x] Fixed train/val/test split 70/15/15 (documented in metadata.json).
+- [x] Ensure split is deterministic with fixed seed.
+- [x] Save split indices for reproducibility.
 
 ### 2.5 Persist processed dataset
-- [ ] Write processed data to binary format for fast training.
-- [ ] Save metadata file (feature dim, class mapping, split info, counts).
+- [x] Write processed data to binary format for fast training.
+- [x] Save metadata file (feature dim, class mapping, split info, counts).
 
 ### 2.6 Preprocessing sanity checks
-- [ ] Print total proteins and total residues.
-- [ ] Print class distribution (`H/E/C`) for train/val/test.
-- [ ] Confirm no NaN/Inf in features.
-- [ ] Confirm sample count after windowing matches expectation.
+- [x] Print total proteins and total residues.
+- [x] Print class distribution (`H/E/C`) for train/val/test.
+- [x] Confirm no NaN/Inf in features.
+- [x] Confirm sample count after windowing matches expectation.
 
 Done criteria:
 - `data/processed/` contains deterministic, reusable training data + metadata.
@@ -112,29 +111,29 @@ Done criteria:
 
 ## Phase 3: Metrics, Logging, And CLI Contract
 ### 3.1 Metrics
-- [ ] Implement Q3 metric exactly:
-  - [ ] `Q3 = (correct_H + correct_E + correct_C) / total_residues * 100`.
-- [ ] Implement per-class accuracy and confusion matrix.
+- [x] Implement Q3 metric exactly:
+  - [x] `Q3 = (correct_H + correct_E + correct_C) / total_residues * 100`.
+- [x] Implement per-class accuracy and confusion matrix.
 
 ### 3.2 Logging and output schema
-- [ ] Define JSON schema for each run:
-  - [ ] model/variant name
-  - [ ] seed, epochs, batch size, learning rate
-  - [ ] thread/rank config
-  - [ ] train/val/test Q3
-  - [ ] epoch times and total time
-  - [ ] hardware/compiler info
-- [ ] Save logs under `results/<variant>/`.
+- [x] Define JSON schema for each run:
+  - [x] model/variant name
+  - [x] seed, epochs, batch size, learning rate
+  - [x] thread/rank config
+  - [x] train/val/test Q3
+  - [x] epoch times and total time
+  - [x] hardware/compiler info
+- [x] Save logs under `results/<variant>/`.
 
 ### 3.3 Unified CLI
-- [ ] Enforce common flags across all binaries:
-  - [ ] `--data`
-  - [ ] `--epochs`
-  - [ ] `--batch`
-  - [ ] `--lr`
-  - [ ] `--seed`
-  - [ ] `--threads` (where applicable)
-  - [ ] `--out`
+- [x] Enforce common flags across all binaries:
+  - [x] `--data`
+  - [x] `--epochs`
+  - [x] `--batch`
+  - [x] `--lr`
+  - [x] `--seed`
+  - [x] `--threads` (where applicable)
+  - [x] `--out`
 
 Done criteria:
 - All variants produce machine-readable logs in a common format.
@@ -143,21 +142,24 @@ Done criteria:
 
 ## Phase 4: Serial Baseline (Reference Truth)
 ### 4.1 Model implementation
-- [ ] Implement compact MLP (two hidden layers + 3-class softmax).
-- [ ] Use cross-entropy loss.
-- [ ] Use SGD or momentum SGD.
+- [x] Implement compact MLP (two hidden layers + 3-class softmax).
+- [x] Use cross-entropy loss.
+- [x] Use SGD (mini-batch, with optional lr decay).
 
 ### 4.2 Training loop
-- [ ] Forward pass.
-- [ ] Backward pass.
-- [ ] Weight update.
-- [ ] Validation at each epoch.
-- [ ] Final test evaluation (Q3).
+- [x] Forward pass.
+- [x] Backward pass.
+- [x] Weight update.
+- [x] Validation at each epoch.
+- [x] Final test evaluation (Q3).
 
 ### 4.3 Stability checks
-- [ ] Fix RNG seed and confirm repeatability.
-- [ ] Run short smoke test (1-2 epochs) to verify loss decreases.
-- [ ] Run full baseline and save final metrics/time.
+- [x] Fix RNG seed and confirm repeatability.
+- [x] Run short smoke test (1-2 epochs) to verify loss decreases.
+- [x] Run full baseline and save final metrics/time.
+  - Config: hidden1=256, hidden2=128, epochs=80, lr=0.01, seed=42
+  - Result: test Q3=62.74%, total_time=441s
+  - Reference JSON: results/serial/serial_t1_s42_20260308_124640.json
 
 Done criteria:
 - Serial version is stable, reproducible, and used as accuracy reference for all parallel versions.
@@ -166,22 +168,24 @@ Done criteria:
 
 ## Phase 5: OpenMP Version
 ### 5.1 Parallel strategy
-- [ ] Parallelize sample or mini-batch gradient computation.
-- [ ] Use per-thread local gradient buffers.
-- [ ] Reduce local gradients into global gradient.
-- [ ] Apply single-thread model update after reduction.
+- [x] Parallelize sample or mini-batch gradient computation.
+- [x] Use per-thread local gradient buffers.
+- [x] Reduce local gradients into global gradient.
+- [x] Apply single-thread model update after reduction.
 
 ### 5.2 Performance-sensitive implementation
-- [ ] Keep parallel region persistent when possible (avoid frequent fork/join).
-- [ ] Document OpenMP schedule and chunk policy.
-- [ ] Add optional pinning settings in experiment notes:
-  - [ ] `OMP_PROC_BIND=true`
-  - [ ] `OMP_PLACES=cores`
+- [x] Keep parallel region persistent when possible (avoid frequent fork/join).
+- [x] Document OpenMP schedule and chunk policy (`schedule(static)` on inner k-loop).
+- [x] Add optional pinning settings in experiment notes:
+  - [x] `OMP_PROC_BIND=true`
+  - [x] `OMP_PLACES=cores`
 
 ### 5.3 Correctness validation
-- [ ] Compare OpenMP Q3 vs serial (same seed and hyperparameters).
-- [ ] Ensure difference stays within small tolerance.
-- [ ] Validate no race conditions with thread sanitizing checks (if available).
+- [x] Compare OpenMP Q3 vs serial (same seed and hyperparameters).
+- [x] Ensure difference stays within small tolerance.
+  - Verified: loss/val_q3/test_q3 identical at epoch 1-2 (seed=42, 256/128 config)
+  - Speedup: ~3.3× with 4 threads (~4.9s/epoch serial → ~1.5s/epoch OMP)
+- [x] Validate no race conditions with thread sanitizing checks (if available).
 
 Done criteria:
 - OpenMP code produces matching accuracy and measurable speedup.
