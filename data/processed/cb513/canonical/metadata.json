@@ -7,6 +7,8 @@
     "H": 0
   },
   "dataset": "CB513",
+  "encoding": "onehot",
+  "feature_dim": 260,
   "files_with_errors": [],
   "files_with_warnings": [
     "1acx.all: unknown DSSP symbols mapped to C -> ?:1",
@@ -44,6 +46,23 @@
   },
   "raw_dir": "data/raw/cb513/513_distribute",
   "source_files_count": 513,
+  "split_class_distribution": {
+    "test": {
+      "C": 5364,
+      "E": 2841,
+      "H": 4487
+    },
+    "train": {
+      "C": 24883,
+      "E": 13103,
+      "H": 20377
+    },
+    "val": {
+      "C": 5716,
+      "E": 3115,
+      "H": 4233
+    }
+  },
   "split_counts": {
     "test": 77,
     "train": 359,

@@ -12,16 +12,44 @@ import argparse
 import csv
 import json
 import random
+import struct
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Sequence, Tuple
+from typing import Callable, Dict, Iterable, Iterator, List, Sequence, Tuple
 
 
 AA20 = "ACDEFGHIKLMNPQRSTVWY"
 DSSP_KNOWN_SYMBOLS = set("HBEGITS_")
 Q3_SYMBOLS = ("H", "E", "C")
 Q3_TO_ID = {"H": 0, "E": 1, "C": 2}
+
+# Standard BLOSUM62 log-odds matrix (row order = AA20 alphabet).
+# Each row gives substitution scores for that amino acid against all 20 AAs.
+# Source: NCBI BLOSUM62, stored as integers (common convention).
+BLOSUM62: Dict[str, List[int]] = {
+    #        A   C   D   E   F   G   H   I   K   L   M   N   P   Q   R   S   T   V   W   Y
+    "A": [   4, -1, -2, -1, -2,  0, -2, -1, -1, -1, -1, -2, -1, -1, -1,  1,  0,  0, -3, -2],
+    "C": [  -1,  9, -3, -4, -2, -3, -3, -1, -3, -1, -1, -3, -3, -3, -3, -1, -1, -1, -2, -2],
+    "D": [  -2, -3,  6,  2, -3, -1, -1, -3, -1, -4, -3,  1, -1,  0, -2,  0, -1, -3, -4, -3],
+    "E": [  -1, -4,  2,  5, -3, -2,  0, -3,  1, -3, -2,  0, -1,  2,  0,  0, -1, -2, -3, -2],
+    "F": [  -2, -2, -3, -3,  6, -3, -1,  0, -3,  0,  0, -3, -4, -3, -3, -2, -2, -1,  1,  3],
+    "G": [   0, -3, -1, -2, -3,  6, -2, -4, -2, -4, -3,  0, -2, -2, -2,  0, -2, -3, -2, -3],
+    "H": [  -2, -3, -1,  0, -1, -2,  8, -3, -1, -3, -2,  1, -2,  0,  0, -1, -2, -3, -2,  2],
+    "I": [  -1, -1, -3, -3,  0, -4, -3,  4, -3,  2,  1, -3, -3, -3, -3, -2, -1,  3, -3, -1],
+    "K": [  -1, -3, -1,  1, -3, -2, -1, -3,  5, -2, -1,  0, -1,  1,  2,  0, -1, -2, -3, -2],
+    "L": [  -1, -1, -4, -3,  0, -4, -3,  2, -2,  4,  2, -3, -3, -2, -2, -2, -1,  1, -2, -1],
+    "M": [  -1, -1, -3, -2,  0, -3, -2,  1, -1,  2,  5, -2, -2,  0, -1, -1, -1,  1, -1, -1],
+    "N": [  -2, -3,  1,  0, -3,  0,  1, -3,  0, -3, -2,  6, -2,  0,  0,  1,  0, -3, -4, -2],
+    "P": [  -1, -3, -1, -1, -4, -2, -2, -3, -1, -3, -2, -2,  7, -1, -2, -1, -1, -2, -4, -3],
+    "Q": [  -1, -3,  0,  2, -3, -2,  0, -3,  1, -2,  0,  0, -1,  5,  1,  0, -1, -2, -2, -1],
+    "R": [  -1, -3, -2,  0, -3, -2,  0, -3,  2, -2, -1,  0, -2,  1,  5, -1, -1, -3, -3, -2],
+    "S": [   1, -1,  0,  0, -2,  0, -1, -2,  0, -2, -1,  1, -1,  0, -1,  4,  1, -2, -3, -2],
+    "T": [   0, -1, -1, -1, -2, -2, -2, -1, -1, -1, -1,  0, -1, -1, -1,  1,  5,  0, -2, -2],
+    "V": [   0, -1, -3, -2, -1, -3, -3,  3, -2,  1,  1, -3, -2, -2, -3, -2,  0,  4, -3, -1],
+    "W": [  -3, -2, -4, -3,  1, -2, -2, -3, -3, -2, -1, -4, -4, -2, -3, -3, -2, -3, 11,  2],
+    "Y": [  -2, -2, -3, -2,  3, -3,  2, -1, -2, -1, -1, -2, -3, -1, -2, -2, -2, -1,  2,  7],
+}
 
 
 @dataclass(frozen=True)
@@ -173,12 +201,56 @@ def encode_one_hot_window(window: str) -> List[float]:
     return vec
 
 
+def encode_blosum62_window(window: str) -> List[float]:
+    """Encode one window using BLOSUM62 substitution scores.
+
+    Each residue maps to its 20-dim BLOSUM62 row (float cast).
+    Ambiguous amino acids (B/X/Z) and unknown tokens map to all-zero vectors,
+    matching the one-hot policy for consistency.
+    """
+    vec: List[float] = []
+    for aa in window:
+        if aa in BLOSUM62:
+            vec.extend(float(v) for v in BLOSUM62[aa])
+        else:
+            vec.extend([0.0] * len(AA20))
+    return vec
+
+
+def write_binary_split(out_dir: Path, split_name: str, X_rows: List[List[float]], y_rows: List[int]) -> None:
+    """Write flat binary files for one split.
+
+    X file: row-major float32, shape [N, feature_dim].
+    y file: contiguous int32, shape [N].
+    No in-file headers — shapes are recorded in binary_meta.json.
+
+    C loading pattern:
+        fread(X, sizeof(float), N * feature_dim, fx);
+        fread(y, sizeof(int),   N,               fy);
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    x_path = out_dir / f"{split_name}_X.bin"
+    y_path = out_dir / f"{split_name}_y.bin"
+
+    with x_path.open("wb") as fx:
+        for row in X_rows:
+            fx.write(struct.pack(f"{len(row)}f", *row))
+
+    with y_path.open("wb") as fy:
+        for label in y_rows:
+            fy.write(struct.pack("i", label))
+
+
 def generate_windows_for_record(
-    record: ProteinRecord, window_size: int = 13, padding_token: str = "X"
-) -> Iterator[Tuple[str, str]]:
-    """Yield (window, q3_label) for each residue."""
+    record: ProteinRecord,
+    window_size: int = 13,
+    padding_token: str = "X",
+    encoder: Callable[[str], List[float]] = encode_one_hot_window,
+) -> Iterator[Tuple[List[float], int]]:
+    """Yield (encoded_feature_vector, class_id) for each residue."""
     for idx, label in enumerate(record.labels_q3):
-        yield make_window(record.sequence, idx, window_size=window_size, padding_token=padding_token), label
+        window = make_window(record.sequence, idx, window_size=window_size, padding_token=padding_token)
+        yield encoder(window), map_q3_to_id(label)
 
 
 def split_fixed(
@@ -281,6 +353,19 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="Whether to persist canonical TSV (true/false). Default: true.",
     )
+    parser.add_argument(
+        "--write-binary",
+        type=parse_bool,
+        default=True,
+        help="Write flat binary split files for C training (true/false). Default: true.",
+    )
+    parser.add_argument(
+        "--encoding",
+        type=str,
+        default="onehot",
+        choices=["onehot", "blosum62"],
+        help="Feature encoding scheme: 'onehot' (default) or 'blosum62'.",
+    )
     return parser.parse_args()
 
 
@@ -301,6 +386,15 @@ def main() -> None:
     if not raw_files:
         raise FileNotFoundError(f"No .all files found under {raw_dir}")
 
+    # Select encoder based on CLI flag.
+    encoder: Callable[[str], List[float]]
+    if args.encoding == "blosum62":
+        encoder = encode_blosum62_window
+        feature_dim = len(AA20) * args.window_size
+    else:
+        encoder = encode_one_hot_window
+        feature_dim = len(AA20) * args.window_size
+
     records: List[ProteinRecord] = []
     global_q8_counts: Counter = Counter()
     global_q3_counts: Counter = Counter()
@@ -319,6 +413,7 @@ def main() -> None:
 
     total_residues = sum(rec.length for rec in records)
     protein_ids = [rec.protein_id for rec in records]
+    record_by_id = {rec.protein_id: rec for rec in records}
 
     if args.split_mode != "fixed":
         raise ValueError(f"Unsupported split mode: {args.split_mode}")
@@ -332,16 +427,49 @@ def main() -> None:
         "ids": splits,
     }
 
+    # Generate encoded windows per split and compute per-split class distribution.
+    ID_TO_Q3 = {v: k for k, v in Q3_TO_ID.items()}
+    split_X: Dict[str, List[List[float]]] = {}
+    split_y: Dict[str, List[int]] = {}
+    split_class_dist: Dict[str, Dict[str, int]] = {}
     window_sample_count = 0
-    for rec in records:
-        for _window, label in generate_windows_for_record(rec, window_size=args.window_size, padding_token="X"):
-            _ = map_q3_to_id(label)
-            window_sample_count += 1
+
+    for split_name, pid_list in splits.items():
+        X_rows: List[List[float]] = []
+        y_rows: List[int] = []
+        class_counts: Counter = Counter()
+        for pid in pid_list:
+            rec = record_by_id[pid]
+            for feat_vec, class_id in generate_windows_for_record(
+                rec, window_size=args.window_size, padding_token="X", encoder=encoder
+            ):
+                X_rows.append(feat_vec)
+                y_rows.append(class_id)
+                class_counts[ID_TO_Q3[class_id]] += 1
+                window_sample_count += 1
+        split_X[split_name] = X_rows
+        split_y[split_name] = y_rows
+        split_class_dist[split_name] = {q: class_counts[q] for q in Q3_SYMBOLS}
 
     if window_sample_count != total_residues:
         raise RuntimeError(
             f"Window sample count mismatch: got {window_sample_count}, expected {total_residues}"
         )
+
+    # Print per-split class distribution table.
+    print("\nPer-split class distribution:")
+    header = f"  {'Split':<8} | {'H':>8} | {'E':>8} | {'C':>8} | {'Total':>8}"
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+    for sname in ("train", "val", "test"):
+        dist = split_class_dist[sname]
+        total = sum(dist.values())
+        print(f"  {sname:<8} | {dist['H']:>8,} | {dist['E']:>8,} | {dist['C']:>8,} | {total:>8,}")
+    global_h = sum(split_class_dist[s]["H"] for s in splits)
+    global_e = sum(split_class_dist[s]["E"] for s in splits)
+    global_c = sum(split_class_dist[s]["C"] for s in splits)
+    print(f"  {'TOTAL':<8} | {global_h:>8,} | {global_e:>8,} | {global_c:>8,} | {total_residues:>8,}")
+    print()
 
     metadata_payload = {
         "dataset": "CB513",
@@ -358,8 +486,11 @@ def main() -> None:
         "split_mode": args.split_mode,
         "split_seed": args.seed,
         "split_counts": {k: len(v) for k, v in splits.items()},
+        "split_class_distribution": split_class_dist,
         "window_size": args.window_size,
         "window_sample_count_check": window_sample_count,
+        "encoding": args.encoding,
+        "feature_dim": feature_dim,
         "one_hot_feature_dim": len(AA20) * args.window_size,
         "aa20_alphabet": AA20,
         "ambiguous_aa_policy": "B/X/Z and unknown sequence tokens map to all-zero 20-d vector",
@@ -368,17 +499,41 @@ def main() -> None:
 
     canonical_dir = out_dir / "canonical"
     split_dir = out_dir / "splits"
+    binary_dir = out_dir / "binary"
 
     if args.keep_tsv:
         write_tsv(canonical_dir / "proteins.tsv", records)
     write_json(canonical_dir / "metadata.json", metadata_payload)
     write_json(split_dir / "fixed_split.json", split_payload)
 
+    if args.write_binary:
+        binary_meta: Dict = {
+            "feature_dim": feature_dim,
+            "num_classes": len(Q3_SYMBOLS),
+            "class_map": Q3_TO_ID,
+            "dtype_X": "float32",
+            "dtype_y": "int32",
+            "encoding": args.encoding,
+            "splits": {},
+        }
+        for sname in ("train", "val", "test"):
+            write_binary_split(binary_dir, sname, split_X[sname], split_y[sname])
+            n = len(split_y[sname])
+            binary_meta["splits"][sname] = {
+                "n_samples": n,
+                "X_shape": [n, feature_dim],
+                "class_distribution": split_class_dist[sname],
+            }
+        write_json(binary_dir / "binary_meta.json", binary_meta)
+        print(f"  Binary files written: {binary_dir}")
+
     print("CB513 preprocessing complete.")
     print(f"  Parsed proteins     : {len(records)}")
     print(f"  Total residues      : {total_residues}")
     print(f"  Unknown DSSP -> C   : {unknown_to_c_count}")
     print(f"  Window sample count : {window_sample_count}")
+    print(f"  Encoding            : {args.encoding}")
+    print(f"  Feature dim         : {feature_dim}")
     print(f"  Output root         : {out_dir}")
 
 
