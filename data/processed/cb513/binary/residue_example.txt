@@ -1,0 +1,17 @@
+Window 1: label=2 (C (Coil))
+  AAs:      X X X X X X L G I H S N D
+  Center:   L  (position 6)
+  1s at indices: [129, 145, 167, 186, 215, 231, 242]
+  Total 1s: 7  Total 0s: 253
+
+Window 2: label=1 (E (Sheet))
+  AAs:      X X X X X L G I H S N D T
+  Center:   G  (position 6)
+  1s at indices: [109, 125, 147, 166, 195, 211, 222, 256]
+  Total 1s: 8  Total 0s: 252
+
+Window 3: label=2 (C (Coil))
+  AAs:      X X X X L G I H S N D T R
+  Center:   I  (position 6)
+  1s at indices: [89, 105, 127, 146, 175, 191, 202, 236, 254]
+  Total 1s: 9  Total 0s: 251

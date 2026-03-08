@@ -21,8 +21,10 @@ typedef struct {
     int   threads;        /* --threads  default: 1   (OpenMP/Pthreads only) */
     int   hidden1;        /* --hidden1  default: 128 */
     int   hidden2;        /* --hidden2  default: 64  */
-    char  out_dir[256];   /* --out      default: results/<variant> */
-    int   verbose;        /* --verbose  default: 0   */
+    char  out_dir[256];   /* --out           default: results/<variant> */
+    int   verbose;        /* --verbose       default: 0   */
+    float lr_decay;       /* --lr-decay      default: 1.0 (no decay)  */
+    int   lr_decay_every; /* --lr-decay-every default: 20 epochs      */
 } Args;
 
 /* Parse argc/argv into args using the given variant name for defaults.

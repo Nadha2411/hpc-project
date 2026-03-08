@@ -8,7 +8,8 @@ COMMON_SRCS = src/common/metrics.c \
               src/common/logger.c  \
               src/common/cli.c     \
               src/common/timer.c   \
-              src/common/data_loader.c
+              src/common/data_loader.c \
+              src/models/mlp.c
 COMMON_OBJS = $(COMMON_SRCS:.c=.o)
 
 .PHONY: all clean test_metrics
@@ -20,6 +21,9 @@ train_serial: $(COMMON_OBJS) src/serial/train.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # OpenMP variant
+src/openmp/train.o: src/openmp/train.c
+	$(CC) $(CFLAGS) -fopenmp -c -o $@ $<
+
 train_omp: $(COMMON_OBJS) src/openmp/train.o
 	$(CC) $(CFLAGS) -fopenmp -o $@ $^ $(LDFLAGS)
 
